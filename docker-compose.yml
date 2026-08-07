@@ -1,0 +1,12 @@
+services:
+  filingsx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: filingsx-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # Environment variables can be passed for future backend integration
+    # environment:
+    #   - API_URL=http://backend:3000

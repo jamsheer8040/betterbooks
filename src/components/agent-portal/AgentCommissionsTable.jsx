@@ -1,0 +1,5 @@
+const formatAmount = (amount) => `AED ${(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+export default function AgentCommissionsTable({ commissions }) {
+  return <div className="overflow-hidden rounded-xl border border-gray-200 bg-white"><div className="border-b border-gray-100 px-5 py-4"><h2 className="font-semibold text-gray-900">Commissions</h2></div>{commissions.map(commission => <div key={commission.id} className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 last:border-0"><div><p className="text-sm font-medium text-gray-800">{commission.customer_name || 'Customer commission'}</p><p className="text-xs text-gray-400">{commission.date || '—'}</p></div><div className="text-right"><p className="text-sm font-semibold text-gray-900">{formatAmount(commission.amount)}</p><p className="text-xs capitalize text-gray-500">{commission.status?.replace('_', ' ') || 'Pending'}</p></div></div>)}{!commissions.length && <p className="px-5 py-12 text-center text-sm text-gray-400">No commissions found.</p>}</div>;
+}
