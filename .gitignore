@@ -27,6 +27,15 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+# Next.js and build
+.next
+out
+*.tsbuildinfo
+
+# Uploads
+/server/uploads
+uploads
+
+# Vite
 .vite
 base44/.app.jsonc

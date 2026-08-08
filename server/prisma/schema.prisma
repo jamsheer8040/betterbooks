@@ -1,0 +1,371 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String
+  name         String
+  phone        String?
+  role         String       @default("admin") // admin, manager, agent, viewer
+  user_type_id String?
+  status       String       @default("active") // active, inactive
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+
+  user_type    UserType?    @relation(fields: [user_type_id], references: [id], onDelete: SetNull)
+  profile      UserProfile?
+  agent        Agent?
+
+  @@map("users")
+}
+
+model UserType {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  permissions Json     // Array of permission strings e.g. ["customers.view", "filings.create"]
+  is_system   Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  users       User[]
+
+  @@map("user_types")
+}
+
+model UserProfile {
+  id                   String   @id @default(uuid())
+  user_id              String   @unique
+  permission_overrides Json?    // Key-value pairs of permission overrides
+  metadata             Json?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  user                 User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model Agent {
+  id              String       @id @default(uuid())
+  user_id         String?      @unique
+  name            String
+  email           String?
+  phone           String?
+  commission_type String       @default("percentage") // percentage, flat
+  commission_rate Float        @default(10.0)
+  status          String       @default("active")
+  notes           String?      @db.Text
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+
+  user            User?        @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  customers       Customer[]
+  commissions     Commission[]
+
+  @@map("agents")
+}
+
+model Customer {
+  id                    String             @id @default(uuid())
+  name                  String
+  company_name          String?
+  trn                   String?
+  email                 String?
+  mobile                String?
+  phone                 String?
+  address               String?            @db.Text
+  city                  String?
+  country               String?            @default("United Arab Emirates")
+  contact_person        String?
+  filing_cycle          String             @default("Jan-Apr-Jul-Oct") // Jan-Apr-Jul-Oct, Feb-May-Aug-Nov, Mar-Jun-Sep-Dec
+  agent_id              String?
+  trade_license_number  String?
+  trade_license_expiry  DateTime?
+  trade_license_url     String?
+  portal_username       String?
+  portal_password       String?
+  status                String             @default("active")
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
+
+  agent                 Agent?             @relation(fields: [agent_id], references: [id], onDelete: SetNull)
+  documents             CustomerDocument[]
+  filings               Filing[]
+  milestones            FilingMilestone[]
+  invoices              Invoice[]
+  payments              Payment[]
+  funds                 CustomerFund[]
+  commissions           Commission[]
+  ledger_entries        LedgerEntry[]
+
+  @@map("customers")
+}
+
+model CustomerDocument {
+  id              String    @id @default(uuid())
+  customer_id     String
+  label           String
+  document_type   String?   // trade_license, eid, passport, vat_certificate, corporate_tax, other
+  owner_name      String?
+  file_url        String    @db.Text
+  expiry_date     DateTime?
+  issue_date      DateTime?
+  document_number String?
+  notes           String?   @db.Text
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  customer        Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  @@map("customer_documents")
+}
+
+model Filing {
+  id              String    @id @default(uuid())
+  customer_id     String
+  filing_month    String    // e.g. "January 2026"
+  period_start    DateTime
+  period_end      DateTime
+  filing_date     DateTime?
+  due_date        DateTime?
+  sales_amount    Float     @default(0)
+  sales_vat       Float     @default(0)
+  expenses_amount Float     @default(0)
+  expenses_vat    Float     @default(0)
+  other_expenses  Json?     // Array of { label, amount }
+  net_vat_payable Float     @default(0)
+  vat_inclusive   Boolean   @default(false)
+  status          String    @default("draft") // draft, filed, pending_payment, overdue
+  notes           String?   @db.Text
+  file_url        String?   @db.Text
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  customer        Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  @@map("filings")
+}
+
+model FilingMilestone {
+  id          String    @id @default(uuid())
+  customer_id String
+  month_key   String    // e.g. "2026-01"
+  year        Int       @default(2026)
+  status      String    @default("pending") // pending, in_progress, filed, overdue
+  filed_date  DateTime?
+  notes       String?   @db.Text
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  customer    Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  @@unique([customer_id, month_key])
+  @@map("filing_milestones")
+}
+
+model ProductService {
+  id          String        @id @default(uuid())
+  name        String
+  code        String?       @unique
+  type        String        @default("service") // product, service
+  price       Float         @default(0)
+  vat_rate    Float         @default(5.0)
+  description String?       @db.Text
+  status      String        @default("active")
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  items       InvoiceItem[]
+
+  @@map("products_services")
+}
+
+model Invoice {
+  id                   String        @id @default(uuid())
+  invoice_number       String        @unique
+  customer_id          String
+  invoice_date         DateTime      @default(now())
+  due_date             DateTime?
+  status               String        @default("draft") // draft, credit, partially_paid, paid, cancelled
+  cancellation_reason  String?       @db.Text
+  type                 String        @default("standard") // standard, credit, receipt, proforma
+  currency             String        @default("AED")
+  subtotal             Float         @default(0)
+  vat_rate             Float         @default(5.0)
+  vat_amount           Float         @default(0)
+  discount_amount      Float         @default(0)
+  total                Float         @default(0)
+  paid_amount          Float         @default(0)
+  balance_due          Float         @default(0)
+  notes                String?       @db.Text
+  terms_and_conditions String?       @db.Text
+  linked_invoice_id    String?
+  whatsapp_share_count Int           @default(0)
+  created_at           DateTime      @default(now())
+  updated_at           DateTime      @updatedAt
+
+  customer             Customer      @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  items                InvoiceItem[]
+  payments             Payment[]
+  commissions          Commission[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id                 String          @id @default(uuid())
+  invoice_id         String
+  product_service_id String?
+  description        String
+  quantity           Float           @default(1)
+  unit_price         Float           @default(0)
+  discount           Float           @default(0)
+  vat_rate           Float           @default(5.0)
+  vat_amount         Float           @default(0)
+  total              Float           @default(0)
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+
+  invoice            Invoice         @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  product_service    ProductService? @relation(fields: [product_service_id], references: [id], onDelete: SetNull)
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  invoice_id       String?
+  customer_id      String
+  amount           Float         @default(0)
+  payment_date     DateTime      @default(now())
+  payment_method   String        @default("bank_transfer") // bank_transfer, cash, cheque, card, customer_fund
+  wallet_id        String?
+  reference_number String?
+  notes            String?       @db.Text
+  from_fund        Boolean       @default(false)
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  invoice          Invoice?      @relation(fields: [invoice_id], references: [id], onDelete: SetNull)
+  customer         Customer      @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  wallet           Wallet?       @relation(fields: [wallet_id], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+}
+
+model CustomerFund {
+  id               String    @id @default(uuid())
+  customer_id      String
+  amount           Float     @default(0)
+  payment_date     DateTime  @default(now())
+  payment_method   String    @default("bank_transfer")
+  wallet_id        String?
+  reference_number String?
+  notes            String?   @db.Text
+  status           String    @default("available") // available, utilized
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  customer         Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  wallet           Wallet?   @relation(fields: [wallet_id], references: [id], onDelete: SetNull)
+
+  @@map("customer_funds")
+}
+
+model Wallet {
+  id             String         @id @default(uuid())
+  name           String
+  bank_name      String?
+  currency       String         @default("AED")
+  account_number String?
+  iban           String?
+  balance        Float          @default(0)
+  status         String         @default("active")
+  notes          String?        @db.Text
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+
+  payments       Payment[]
+  funds          CustomerFund[]
+
+  @@map("wallets")
+}
+
+model Commission {
+  id           String    @id @default(uuid())
+  agent_id     String
+  customer_id  String?
+  invoice_id   String?
+  amount       Float     @default(0)
+  status       String    @default("pending_approval") // pending_approval, approved, released
+  date         DateTime  @default(now())
+  is_advance   Boolean   @default(false)
+  notes        String?   @db.Text
+  approved_at  DateTime?
+  released_at  DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  agent        Agent     @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+  customer     Customer? @relation(fields: [customer_id], references: [id], onDelete: SetNull)
+  invoice      Invoice?  @relation(fields: [invoice_id], references: [id], onDelete: SetNull)
+
+  @@map("commissions")
+}
+
+model LedgerEntry {
+  id               String    @id @default(uuid())
+  customer_id      String?
+  transaction_type String    // invoice_created, payment_received, fund_deposit, fund_adjustment, invoice_cancelled
+  debit_account    String
+  credit_account   String
+  debit_amount     Float     @default(0)
+  credit_amount    Float     @default(0)
+  reference_id     String?
+  reference_type   String?   // invoice, payment, customer_fund, fund_adjustment
+  description      String?   @db.Text
+  date             DateTime  @default(now())
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  customer         Customer? @relation(fields: [customer_id], references: [id], onDelete: SetNull)
+
+  @@map("ledger_entries")
+}
+
+model CompanySettings {
+  id                          String   @id @default(uuid())
+  company_name                String   @default("Better Books Tax Consultancy LLC")
+  address                     String?  @db.Text
+  phone                       String?
+  email                       String?
+  website                     String?
+  trn                         String?
+  logo_url                    String?  @db.Text
+  vat_enabled                 Boolean  @default(true)
+  vat_rate                    Float    @default(5.0)
+  invoice_prefix              String   @default("INV")
+  invoice_footer_notes        String?  @db.Text
+  invoice_payment_terms       String?  @default("30")
+  invoice_terms_conditions    String?  @db.Text
+  bank_name                   String?
+  bank_account_name           String?
+  bank_account_number         String?
+  bank_iban                   String?
+  custom_field_1_label        String?
+  custom_field_2_label        String?
+  auto_sync_tracker_to_filing Boolean  @default(true)
+  allow_edit_filed_filings    Boolean  @default(true)
+  created_at                  DateTime @default(now())
+  updated_at                  DateTime @updatedAt
+
+  @@map("company_settings")
+}

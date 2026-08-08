@@ -1,12 +1,19 @@
+version: '3.8'
+
 services:
-  filingsx:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: filingsx-app
+  mysql:
+    image: mysql:8.0
+    container_name: betterbooks-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: betterbooks
+      MYSQL_USER: betterbooks_user
+      MYSQL_PASSWORD: betterbooks_password
     ports:
-      - "8080:80"
-    restart: unless-stopped
-    # Environment variables can be passed for future backend integration
-    # environment:
-    #   - API_URL=http://backend:3000
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
