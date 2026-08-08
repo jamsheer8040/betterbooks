@@ -1,19 +1,72 @@
 version: '3.8'
 
 services:
-  mysql:
+  betterbooks-mysql:
     image: mysql:8.0
     container_name: betterbooks-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: betterbooks
-      MYSQL_USER: betterbooks_user
-      MYSQL_PASSWORD: betterbooks_password
-    ports:
-      - '3306:3306'
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-betterbooks_root_secure_2026}
+      MYSQL_DATABASE: ${DB_NAME:-betterbooks}
+      MYSQL_USER: ${DB_USER:-betterbooks_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-betterbooks_pass_secure_2026}
     volumes:
-      - mysql_data:/var/lib/mysql
+      - betterbooks_mysql_data:/var/lib/mysql
+    networks:
+      - betterbooks-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-betterbooks_root_secure_2026}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  betterbooks-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: betterbooks-server
+    restart: always
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: mysql://${DB_USER:-betterbooks_user}:${DB_PASSWORD:-betterbooks_pass_secure_2026}@betterbooks-mysql:3306/${DB_NAME:-betterbooks}
+      JWT_SECRET: ${JWT_SECRET:-betterbooks_super_secret_jwt_key_2026_prod}
+      JWT_EXPIRES_IN: 7d
+      CLIENT_URL: https://filings.folderex.online
+      UPLOAD_DIR: ./uploads
+    ports:
+      - "127.0.0.1:5001:5000"
+    volumes:
+      - betterbooks_uploads:/app/uploads
+    depends_on:
+      betterbooks-mysql:
+        condition: service_healthy
+    networks:
+      - betterbooks-net
+
+  betterbooks-client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://filings.folderex.online/api
+        NEXT_PUBLIC_APP_NAME: "Better Books"
+    container_name: betterbooks-client
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      - betterbooks-server
+    networks:
+      - betterbooks-net
 
 volumes:
-  mysql_data:
+  betterbooks_mysql_data:
+  betterbooks_uploads:
+
+networks:
+  betterbooks-net:
+    driver: bridge
