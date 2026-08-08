@@ -23,5 +23,5 @@ echo "🌱 Running database seed..."
 docker compose exec betterbooks-server npm run prisma:seed || true
 
 echo "✅ Docker deployment completed successfully!"
-echo "📡 Next.js running on: 127.0.0.1:3001"
-echo "📡 Express API running on: 127.0.0.1:5001"
+echo "📡 Next.js running on: 127.0.0.1:3010"
+echo "📡 Express API running on: 127.0.0.1:5010"

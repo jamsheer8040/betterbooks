@@ -35,7 +35,7 @@ services:
       CLIENT_URL: https://filings.folderex.online
       UPLOAD_DIR: ./uploads
     ports:
-      - "127.0.0.1:5001:5000"
+      - "127.0.0.1:5010:5000"
     volumes:
       - betterbooks_uploads:/app/uploads
     depends_on:
@@ -57,7 +57,7 @@ services:
       NODE_ENV: production
       PORT: 3000
     ports:
-      - "127.0.0.1:3001:3000"
+      - "127.0.0.1:3010:3000"
     depends_on:
       - betterbooks-server
     networks:
