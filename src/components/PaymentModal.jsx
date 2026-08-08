@@ -148,7 +148,7 @@ export default function PaymentModal({ invoice, mode = 'add', onPaid, onClose })
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center"><CreditCard className="w-4.5 h-4.5 text-green-600" /></div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{isQuick ? 'Mark as Paid' : 'Add Payment'}</h2>
+              <h2 className="text-lg font-bold text-gray-900">Add Payment</h2>
               <p className="text-xs text-gray-500 mt-0.5">{invoice.invoice_number} · {invoice.customer_name}</p>
             </div>
           </div>
@@ -167,8 +167,8 @@ export default function PaymentModal({ invoice, mode = 'add', onPaid, onClose })
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-sm text-green-700"><CheckCircle2 className="w-4 h-4" /> This invoice is fully paid.</div>
           ) : (
             <>
-              {/* Use Customer Fund toggle (only in 'add' mode) */}
-              {!isQuick && fundBalance > 0 && (
+              {/* Use Customer Fund toggle (shows whenever advance funds exist) */}
+              {fundBalance > 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
                   <button onClick={handleFundToggle} className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
@@ -189,8 +189,8 @@ export default function PaymentModal({ invoice, mode = 'add', onPaid, onClose })
                 </div>
               )}
 
-              {/* Amount (not shown in quick mode or when using fund) */}
-              {!isQuick && !useFund && (
+              {/* Amount */}
+              {!useFund && (
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-2">Payment Amount</label>
                   <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5 mb-3">
@@ -219,8 +219,8 @@ export default function PaymentModal({ invoice, mode = 'add', onPaid, onClose })
                 </div>
               )}
 
-              {/* Payment Method (hidden in quick mode) */}
-              {!isQuick && !useFund && (
+              {/* Payment Method */}
+              {!useFund && (
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">Payment Method</label>
                   <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
@@ -241,13 +241,11 @@ export default function PaymentModal({ invoice, mode = 'add', onPaid, onClose })
                 <input type="text" value={referenceNumber} onChange={e => setReferenceNumber(e.target.value)} placeholder="Cheque no., transfer ref, etc." className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
               </div>
 
-              {/* Notes (hidden in quick mode) */}
-              {!isQuick && (
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm h-14 resize-none focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Optional notes" />
-                </div>
-              )}
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm h-14 resize-none focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Optional notes" />
+              </div>
             </>
           )}
         </div>

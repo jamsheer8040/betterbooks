@@ -189,9 +189,9 @@ export default function InvoiceModal({ customer, filing, monthKey, onSaved, onCl
 
   useEffect(() => {
     base44.entities.CompanySettings.list().then(list => {
-      const settings = list?.[0] || { vat_enabled: true, vat_rate: 5 };
+      const settings = list?.[0] || { vat_enabled: false, vat_rate: 5 };
       setCompany(settings);
-      setIncludeVat(settings.vat_enabled !== false);
+      setIncludeVat(settings.vat_enabled === true);
     });
   }, []);
 
@@ -210,7 +210,7 @@ export default function InvoiceModal({ customer, filing, monthKey, onSaved, onCl
   });
 
   const [includeVat, setIncludeVat] = useState(false);
-  const vatEnabled = company?.vat_enabled !== false;
+  const vatEnabled = company?.vat_enabled === true;
   const vatRate = company?.vat_rate ?? 5;
 
   const subtotal = form.line_items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);

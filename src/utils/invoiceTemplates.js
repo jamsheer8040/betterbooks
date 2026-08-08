@@ -37,7 +37,7 @@ async function buildStandardDoc(inv, company) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, mL = 15, mR = 195;
   const isReceipt = inv.type === 'service_receipt';
-  const vatEnabled = company?.vat_enabled !== false;
+  const vatEnabled = company?.vat_enabled === true;
   const vatRate = company?.vat_rate ?? 5;
 
   // Top cyan/teal accent line
@@ -186,7 +186,7 @@ async function buildDetailedDoc(inv, company) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, mL = 15, mR = 195;
   const isReceipt = inv.type === 'service_receipt';
-  const vatEnabled = company?.vat_enabled !== false;
+  const vatEnabled = company?.vat_enabled === true;
   const vatRate = company?.vat_rate ?? 5;
 
   doc.setFillColor(15, 23, 42); doc.rect(0, 0, W, 42, 'F');
@@ -292,7 +292,7 @@ async function buildModernDoc(inv, company) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, mL = 18, mR = 192;
   const isReceipt = inv.type === 'service_receipt';
-  const vatEnabled = company?.vat_enabled !== false;
+  const vatEnabled = company?.vat_enabled === true;
   const vatRate = company?.vat_rate ?? 5;
 
   // Gradient-style two-tone header

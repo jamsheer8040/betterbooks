@@ -43,7 +43,7 @@ export default function CompanySetup() {
     website: '',
     trn: '',
     logo_url: '',
-    vat_enabled: true,
+    vat_enabled: false,
     vat_rate: 5,
     invoice_prefix: 'INV',
     invoice_footer_notes: '',
@@ -297,19 +297,56 @@ export default function CompanySetup() {
       {/* VAT Settings Tab */}
       {activeTab === 'vat' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+          {/* TRN Requirement Card */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-gray-700">
+                Company Tax Registration Number (TRN) <span className="text-red-500">* Required to enable VAT</span>
+              </label>
+              {settings.trn?.trim() ? (
+                <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> TRN Registered
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" /> TRN Missing
+                </span>
+              )}
+            </div>
+            <input
+              type="text"
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${!settings.trn?.trim() ? 'border-amber-300 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200 focus:ring-blue-500'}`}
+              value={settings.trn || ''}
+              onChange={e => set('trn', e.target.value)}
+              placeholder="e.g. 100XXXXXXXXX3 (15 digits)"
+            />
+            {!settings.trn?.trim() && (
+              <p className="text-xs text-amber-700 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> You must enter your company TRN number before you can turn on VAT settings.
+              </p>
+            )}
+          </div>
+
           <div className="flex items-center justify-between pb-4 border-b border-gray-100">
             <div>
               <p className="font-semibold text-gray-900">Enable VAT</p>
-              <p className="text-xs text-gray-500 mt-0.5">Apply VAT to invoices by default</p>
+              <p className="text-xs text-gray-500 mt-0.5">Apply VAT (5%) to invoices by default</p>
             </div>
             <button
               type="button"
-              onClick={() => set('vat_enabled', !settings.vat_enabled)}
+              onClick={() => {
+                if (!settings.vat_enabled && (!settings.trn || !settings.trn.trim())) {
+                  alert('Tax Registration Number (TRN) is required before enabling VAT. Please enter your 15-digit TRN first.');
+                  return;
+                }
+                set('vat_enabled', !settings.vat_enabled);
+              }}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${settings.vat_enabled ? 'bg-blue-600' : 'bg-gray-200'}`}
             >
               <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${settings.vat_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
             </button>
           </div>
+
           <div className={`space-y-4 ${!settings.vat_enabled ? 'opacity-40 pointer-events-none' : ''}`}>
             <div className="max-w-xs">
               <label className="block text-xs font-medium text-gray-600 mb-1">VAT Rate (%)</label>
@@ -326,7 +363,7 @@ export default function CompanySetup() {
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
               <p className="text-sm font-medium text-blue-800">Current VAT: {settings.vat_rate}%</p>
-              <p className="text-xs text-blue-600 mt-1">This rate will be applied to all new invoices</p>
+              <p className="text-xs text-blue-600 mt-1">This rate will be applied to all new invoices when VAT is enabled</p>
             </div>
           </div>
         </div>

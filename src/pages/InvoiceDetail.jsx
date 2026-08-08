@@ -72,7 +72,7 @@ export default function InvoiceDetail() {
   useEffect(() => { load(); }, [id]);
 
   const isReceipt = invoice?.type === 'service_receipt';
-  const taxEnabled = company?.vat_enabled !== false;
+  const taxEnabled = company?.vat_enabled === true;
   const vatRate = company?.vat_rate ?? 5;
   const isCancelled = invoice?.status === 'cancelled';
   const statusKey = invoice?.status === 'sent' ? 'credit' : invoice?.status;
@@ -240,8 +240,7 @@ export default function InvoiceDetail() {
                   {totalPaid > 0 ? (<>Partially paid: <span className="font-semibold text-green-600">AED {fmt(totalPaid)}</span> of <span className="font-semibold text-gray-900">AED {fmt(invoice.total)}</span></>) : (<>Outstanding: <span className="font-semibold text-gray-900">AED {fmt(invoice.total)}</span></>)}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => { setPaymentMode('add'); setShowPayment(true); }} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"><CreditCard className="w-4 h-4" /> Add Payment</button>
-                  <button onClick={() => { setPaymentMode('quick'); setShowPayment(true); }} className="flex items-center gap-2 px-4 py-2 border border-green-200 text-green-700 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors"><CheckCircle2 className="w-4 h-4" /> Mark as Paid</button>
+                  <button onClick={() => { setPaymentMode('add'); setShowPayment(true); }} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm cursor-pointer"><CreditCard className="w-4 h-4" /> Add Payment</button>
                 </div>
               </div>
             )}

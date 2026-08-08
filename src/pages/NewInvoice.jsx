@@ -55,14 +55,14 @@ export default function NewInvoice() {
       base44.entities.ProductService.filter({ status: 'active' }),
       base44.entities.CompanySettings.list(),
     ]).then(([c, p, settings]) => {
-      const companySettings = settings[0] || { vat_enabled: true, vat_rate: 5 };
+      const companySettings = settings[0] || { vat_enabled: false, vat_rate: 5 };
       setCustomers(c); setProducts(p); setCompany(companySettings);
       setForm(f => ({ ...f, line_items: f.line_items.map(item => ({ ...item, tax_rate: companySettings.vat_enabled ? (companySettings.vat_rate || 5) : 0 })) }));
       setLoading(false);
     });
   }, []);
 
-  const vatEnabled = company?.vat_enabled !== false;
+  const vatEnabled = company?.vat_enabled === true;
   const vatRate = company?.vat_rate ?? 5;
 
   const selectProduct = (idx, productId) => {
